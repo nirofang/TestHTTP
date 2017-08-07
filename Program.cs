@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using SKGL;
+//using SKGL;
 using System.Runtime.Serialization.Json;
 
 using System.Data.SQLite;
 using System.IO;
 using System.Data;
+using System.Net;
+using Newtonsoft.Json;
 
 namespace TestHTTP
 {
@@ -41,21 +43,23 @@ namespace TestHTTP
             //TestKeyMethod();
 
             //TestHttpGet();
-            //TestHttpPost();
-            TestSqlite();
+
+            string vehiecle = TestSqlite();
+
+            TestHttpPost(vehiecle);
 
         }
 
-        private static void TestSqlite()
+        private static string TestSqlite()
         {
             string filename = Environment.GetEnvironmentVariable("localappdata") + @"\CamAligner\Support\Data\Vehicle.db";
-
+            string jsonContent = string.Empty;
             if (File.Exists(filename))
             {
                 var conn = new SQLiteConnection("Data Source=" + filename + ";Version=3;");
                 const string sql = "select * from Vehicle;";
 
-
+                
                 try
                 {
                     Console.WriteLine(conn.State);
@@ -65,33 +69,76 @@ namespace TestHTTP
                     var da = new SQLiteDataAdapter(sql, conn);
                     da.Fill(ds);
 
-                    foreach (var column in ds.Tables[0].Columns)
-                    {
-                        Console.WriteLine(column.ToString());
-                    }
+                    //foreach (DataRow row in ds.Tables[0].Rows)
+                    //{
+                    //    foreach (DataColumn column in ds.Tables[0].Columns)
+                    //    {
+                    //        //Console.WriteLine(column.ToString());
+                    //        Console.Write(row[column]);
+                    //    }
+                    //    Console.WriteLine();
+                    //}
+
+                    //Console.WriteLine(ds2json(ds));
+                    jsonContent = ds2json(ds);
                 }
                 catch (Exception)
                 {
                     throw;
                 }
-                
-                Console.ReadKey();
+
+               
+
+                //Console.ReadKey();
 
             }
+
+
+
+            return jsonContent;
         }
 
-        private static void TestKeyMethod()
+        public static string ds2json(DataSet ds)
         {
-            SerialKeyConfiguration skc = new SerialKeyConfiguration();
-            Validate validate = new Validate(skc);
-            //CDKey: KTZEY - UBGPZ - REXIG - INWXB, MachineCode: 92040
-            validate.Key = "KTZEY - UBGPZ - REXIG - INWX";
-            validate.secretPhase = "hello";
+            return JsonConvert.SerializeObject(ds, Formatting.Indented);
         }
 
-        private static void TestHttpPost()
+        //private static void TestKeyMethod()
+        //{
+        //    SerialKeyConfiguration skc = new SerialKeyConfiguration();
+        //    Validate validate = new Validate(skc);
+        //    //CDKey: KTZEY - UBGPZ - REXIG - INWXB, MachineCode: 92040
+        //    validate.Key = "KTZEY - UBGPZ - REXIG - INWX";
+        //    validate.secretPhase = "hello";
+        //}
+
+        private static void TestHttpPost(string vehiecle)
         {
-            throw new NotImplementedException();
+            //string url = "https://api.baidu.com/json/sms/v3/AccountService/getAccountInfo";
+
+            string url = "http://localhost:3000/TestPost";
+            HttpWebRequest request = WebRequest.Create(url) as HttpWebRequest;
+            request.Method = "POST";
+            request.ContentType = "application/json";
+            //string data = "{n\"vhiecle\": {\n\"CustomerName\": \"30xxx6aaxxx93ac8cxx8668xx39xxxx\",\n\"MachineCode\": \"jdads\",\n\"RegNo\": \"liuqiangdong2010\",\n\"MakeType\": \"\"\n},\n\"body\": {}\n}";
+            //string data = "{\"vhiecle\": {\"CustomerName\": \"30xxx6aaxxx93ac8cxx8668xx39xxxx\",\"MachineCode\": \"jdads\",\"RegNo\": \"liuqiangdong2010\",\"MakeType\": \"\"}}";
+
+            //string data = "{\"vhiecle\": [{\"CustomerName\": \"30xxx6aaxxx93ac8cxx8668xx39xxxx\",\"MachineCode\": \"jdads\",\"RegNo\": \"liuqiangdong2010\",\"MakeType\": \"\"}, {\"CustomerName\": \"30xxx6aaxxx93ac8cxx8668xx39xxxx\",\"MachineCode\": \"jdads1\",\"RegNo\": \"liuqiangdong2010\",\"MakeType\": \"\"}]}";
+
+            byte[] byteData = UTF8Encoding.UTF8.GetBytes(vehiecle);
+            request.ContentLength = byteData.Length;
+
+            using (Stream postStream = request.GetRequestStream())
+            {
+                postStream.Write(byteData, 0, byteData.Length);
+            }
+
+            using (HttpWebResponse response = request.GetResponse() as HttpWebResponse)
+            {
+                StreamReader reader = new StreamReader(response.GetResponseStream());
+                Console.WriteLine(reader.ReadToEnd());
+            }
+
         }
 
         private static void TestHttpGet()
