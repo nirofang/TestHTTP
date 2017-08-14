@@ -61,6 +61,7 @@
     <Compile Include="SQLiteController.cs" />
     <Compile Include="SQLiteService.cs" />
     <Compile Include="Util\SQLiteUtil.cs" />
+    <Compile Include="Util\WebService.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
